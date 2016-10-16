@@ -157,9 +157,82 @@ public class BigExponentTest
 		// TODO
 	}
 	
-	public void addInfinityTest()
+	public void addToMaxTest()
 	{
-		BigExponent max = BigExponent.MAX_VALUE;
+		// TODO
+	}
+	
+	public void subtractFromMinTest()
+	{
+		// TODO
+	}
+	
+	public void divideByZeroTest()
+	{
+		// TODO
+	}
+	
+	public void multiplyMinTest()
+	{
+		// TODO
+	}
+	
+	public void multiplyMaxTest()
+	{
+		// TODO
+	}
+	
+	public void powMaxTest()
+	{
+		// TODO
+	}
+	
+	public void powMinTest()
+	{
+		// TODO
+	}
+
+	public void addSpecialsTest()
+	{
+		// TODO math with infinity and NaN
+	}
+
+	public void subtractSpecialsTest()
+	{
+		// TODO math with infinity and NaN
+	}
+
+	public void multiplySpecialsTest()
+	{
+		// TODO math with infinity and NaN
+	}
+
+	public void divideSpecialsTest()
+	{
+		// TODO math with infinity and NaN
+	}
+
+	public void powSpecialsTest()
+	{
+		// TODO math with infinity and NaN
+	}
+	
+	public void initializeWithInitinityTest()
+	{
+		Assert.assertTrue("Should be infinite but isn't.", new BigExponent(Double.POSITIVE_INFINITY).isInfinite());
+		Assert.assertTrue("Should be infinite but isn't.", new BigExponent(Double.NEGATIVE_INFINITY).isInfinite());
+		Assert.assertTrue("Should be positive but isn't.", new BigExponent(Double.POSITIVE_INFINITY).isPositive());
+		Assert.assertFalse("Should be negative but isn't.", new BigExponent(Double.NEGATIVE_INFINITY).isPositive());
+	}
+	
+	public void normalizeOutOfBoundsTest()
+	{
+		
+	}
+	
+	public void normalizeWidestSpreadTest()
+	{
+		
 	}
 	
 	@Test

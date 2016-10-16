@@ -2,6 +2,8 @@ package com.gladclef.math;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A way to perform decimal math when the extra precision of a
@@ -45,6 +47,7 @@ public class BigExponent implements Comparable<BigExponent>
 	private long exponent;
 	private long mantissa;
 	private boolean isNan = false;
+	private boolean isFinite = true;
 	
 	/**
 	 * Empty constructor.
@@ -61,25 +64,30 @@ public class BigExponent implements Comparable<BigExponent>
 	 * sign, and mantissa values will be taken from the value.
 	 * 
 	 * @param value The value to create this instance with.
-	 * @throws IllegalArgumentException If the given value is positive/negative
-	 *             infinity.
 	 */
-	public BigExponent(Double value) throws IllegalArgumentException
+	public BigExponent(Double value)
 	{
 		// sign
 		isPositive = value >= 0;
 		
 		// exponent/NaN
-		if (value.isInfinite() || value.isNaN())
+		if (value.isNaN())
 		{
-			if (value.isInfinite())
-			{
-				throw new IllegalArgumentException(
-						String.format("Can't construct a %s from an infinite value.",
-								this.getClass().getSimpleName()));
-			}
 			exponent = 0x7ff;
 			isNan = true;
+		}
+		else if (value.isInfinite())
+		{
+			exponent = 0x7ff;
+			isFinite = false;
+			if (value.equals(Double.POSITIVE_INFINITY))
+			{
+				isPositive = true;
+			}
+			else
+			{
+				isPositive = false;
+			}
 		}
 		else
 		{
@@ -131,6 +139,16 @@ public class BigExponent implements Comparable<BigExponent>
 	public boolean isNaN()
 	{
 		return isNan;
+	}
+	
+	public boolean isFinite()
+	{
+		return isFinite;
+	}
+	
+	public boolean isInfinite()
+	{
+		return !isFinite;
 	}
 	
 	/**
@@ -297,5 +315,125 @@ public class BigExponent implements Comparable<BigExponent>
 	{
 		long longRep = Double.doubleToLongBits(value);
 		return longRep & MAX_MANTISSA;
+	}
+	
+	/**
+	 * Attempts to normalize the exponents between the given BigExponent instances, so that they are operating within the same range.
+	 * <p>
+	 * If the spread of exponents is greater than 2047 (0x7ff), then the one with the smaller exponent will be marked as being out of bounds.
+	 * <p>
+	 * If both values are infinite, then they are both marked out of bounds.
+	 * 
+	 * @param first The first value to adjust.
+	 * @param second The second value to adjust.
+	 * @return The normalized BigExponent values, with their exponents adjusted.
+	 */
+	public static List<NormalizedBigExponent> normalizeExponents(BigExponent first, BigExponent second)
+	{
+		// check for if both values are infinite
+		if (first.isInfinite() && second.isInfinite())
+		{
+			List<NormalizedBigExponent> retval = new ArrayList<>();
+			retval.add(new NormalizedBigExponent(first, first.toDouble(), true, 0));
+			retval.add(new NormalizedBigExponent(second, second.toDouble(), true, 0));
+			return retval;
+		}
+		
+		// check that the exponents are within a valid range of each other
+		if (Math.abs(first.getExponent() - second.getExponent()) > (long) 0x7ff ||
+				!first.isInfinite() || !second.isInfinite())
+		{
+			long firstAdjustment = 0;
+			long secondAdjustment = 0;
+			double firstVal = first.toDouble();
+			double secondVal = second.toDouble();
+			boolean firstOOB = true;
+			boolean secondOOB = true;
+			
+			boolean firstIsGreater = first.getExponent() > second.getExponent();
+			firstIsGreater = (second.isInfinite() && second.isPositive) ? false : true;
+			if (firstIsGreater)
+			{
+				firstAdjustment = first.getExponent();
+				firstVal = toDouble(first.isPositive(), 0, first.getMantissa());
+				firstOOB = false;
+			}
+			else
+			{
+				secondAdjustment = second.getExponent();
+				secondVal = toDouble(second.isPositive(), 0, second.getMantissa());
+				secondOOB = false;
+			}
+			
+			List<NormalizedBigExponent> retval = new ArrayList<>();
+			retval.add(new NormalizedBigExponent(first, firstVal, firstOOB, firstAdjustment));
+			retval.add(new NormalizedBigExponent(second, secondVal, secondOOB, secondAdjustment));
+			return retval;
+		}
+		
+		// adjust the exponents and return new NormalizedBigExponents
+		long adjustment = first.getExponent() - second.getExponent();
+		adjustment = (adjustment == 0x7ff) ? (adjustment / 2l + 1) : adjustment / 2;
+		double firstVal = toDouble(first.isPositive(), first.getExponent() - adjustment, first.getMantissa());
+		double secondVal = toDouble(second.isPositive(), second.getExponent() - adjustment, second.getMantissa());
+		
+		List<NormalizedBigExponent> retval = new ArrayList<>();
+		retval.add(new NormalizedBigExponent(first, firstVal, false, adjustment));
+		retval.add(new NormalizedBigExponent(second, secondVal, false, adjustment));
+		return retval;
+	}
+	
+	public static class NormalizedBigExponent
+	{
+		protected BigExponent source;
+		protected double doubleValue;
+		protected boolean outOfBounds;
+		protected long exponentAdjustment;
+		
+		/**
+		 * @param source The source this was created from.
+		 * @param doubleValue The adjusted value of the source.
+		 * @param outOfBounds If this exponent is less than 2047 (0x7ff) of the exponent of the BigExponent this is being compared to.
+		 * @param exponentAdjustment The adjustment to the doubleValue's exponent.
+		 */
+		public NormalizedBigExponent(BigExponent source, double doubleValue, boolean outOfBounds, long exponentAdjustment)
+		{
+			this.source = source;
+			this.doubleValue = doubleValue;
+			this.outOfBounds = outOfBounds;
+			this.exponentAdjustment = exponentAdjustment;
+		}
+		
+		/**
+		 * The source this was created from.
+		 */
+		public BigExponent getSource()
+		{
+			return source;
+		}
+		
+		/**
+		 * The adjusted value of the source.
+		 */
+		public double getDoubleValue()
+		{
+			return doubleValue;
+		}
+
+		/**
+		 * If this exponent is less than 2047 (0x7ff) of the exponent of the BigExponent this is being compared to.
+		 */
+		public boolean isOutOfBounds()
+		{
+			return outOfBounds;
+		}
+
+		/**
+		 * The adjustment to the doubleValue's exponent.
+		 */
+		public long getExponentAdjustment()
+		{
+			return exponentAdjustment;
+		}
 	}
 }
