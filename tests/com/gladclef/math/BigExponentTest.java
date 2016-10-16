@@ -1,4 +1,4 @@
-package com.gladcelf.math;
+package com.gladclef.math;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,22 +6,21 @@ import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
-S
+
 public class BigExponentTest
 {
+	@Test
 	public void toDouble_staticMethod_SimpleTest()
 	{
-		Assert.assertEquals(
-				Double.doubleToLongBits(1.0000000000000002),
-				Double.doubleToLongBits(BigExponent.toDouble(true, 0x3ff, 1)));
+		assertDoubleAsLong(1.0000000000000002, BigExponent.toDouble(true, 0, 1));
 	}
-	
+
 	@Test
 	public void getMantissaTest()
 	{
 		Assert.assertEquals(0, BigExponent.getMantissa(0));
 		Assert.assertEquals(0, BigExponent.getMantissa(2.0));
-		Assert.assertEquals(BigExponent.MAX_MANTISSA, BigExponent.getMantissa(Double.NaN));
+		Assert.assertEquals((1l << 51), BigExponent.getMantissa(Double.NaN));
 		Assert.assertEquals(0, BigExponent.getMantissa(Double.POSITIVE_INFINITY));
 		Assert.assertEquals(0, BigExponent.getMantissa(Double.NEGATIVE_INFINITY));
 		Assert.assertEquals(1, BigExponent.getMantissa(1.0000000000000002));
@@ -33,37 +32,26 @@ public class BigExponentTest
 	{
 		for (PairContainer pair : createTestingPairs(100))
 		{
-			Assert.assertEquals(pair.firstDouble(), pair.firstBigExponent());
-			Assert.assertEquals(pair.secondDouble(), pair.secondBigExponent());
+			assertDoubleAsLong((double) pair.firstDouble(), pair.firstBigExponent().toDouble());
+			assertDoubleAsLong((double) pair.secondDouble(), pair.secondBigExponent().toDouble());
 		}
 	}
 	
 	@Test
 	public void toDoubleTest_specialDoubleRepresentations()
 	{
-		Assert.assertEquals(
-				Double.doubleToRawLongBits(0.0),
-				Double.doubleToRawLongBits(new BigExponent(0.0).toDouble()));
-		Assert.assertEquals(
-				Double.doubleToRawLongBits(-0.0),
-				Double.doubleToRawLongBits(new BigExponent(-0.0).toDouble()));
+		assertDoubleAsLong(0.0, new BigExponent(0.0).toDouble());
 		
-		Assert.assertEquals(
-				Double.doubleToRawLongBits(Double.POSITIVE_INFINITY),
-				Double.doubleToRawLongBits(new BigExponent(Double.POSITIVE_INFINITY).toDouble()));
-		Assert.assertEquals(
-				Double.doubleToRawLongBits(Double.NEGATIVE_INFINITY),
-				Double.doubleToRawLongBits(new BigExponent(Double.NEGATIVE_INFINITY).toDouble()));
-		Assert.assertEquals(
-				Double.doubleToRawLongBits(Double.NaN),
-				Double.doubleToRawLongBits(new BigExponent(Double.NaN).toDouble()));
+		assertDoubleAsLong(Double.POSITIVE_INFINITY, new BigExponent(Double.POSITIVE_INFINITY).toDouble());
+		assertDoubleAsLong(Double.NEGATIVE_INFINITY, new BigExponent(Double.NEGATIVE_INFINITY).toDouble());
+		assertDoubleAsLong(Double.NaN, new BigExponent(Double.NaN).toDouble());
 
-		Assert.assertEquals(
-				Double.doubleToRawLongBits(new BigExponent(true, 0x7ff, 1).toDouble()),
-				Double.doubleToRawLongBits(new BigExponent(true, 0x7ff, 0).toDouble()));
-		Assert.assertEquals(
-				Double.doubleToRawLongBits(new BigExponent(false, 0x7fe, BigExponent.MAX_MANTISSA).toDouble()),
-				Double.doubleToRawLongBits(new BigExponent(false, 0x7ff, 0).toDouble()));
+		assertDoubleAsLong(
+				new BigExponent(true, 0x7ff, 1).toDouble(),
+				new BigExponent(true, 0x7ff, 0).toDouble());
+		assertDoubleAsLong(
+				new BigExponent(false, 0x7fe, BigExponent.MAX_MANTISSA).toDouble(),
+				new BigExponent(false, 0x7ff, 0).toDouble());
 	}
 	
 	@Test
@@ -189,6 +177,16 @@ public class BigExponentTest
 			String errorMsg = String.format("Raising %d to the %d power", pair.firstDouble(), pair.secondDouble());
 			Assert.assertEquals(errorMsg, expResult, pair.firstBigExponent().pow(pair.secondBigExponent()));
 		}
+	}
+	
+	private static void assertDoubleAsLong(double expected, double actual)
+	{
+		long expectedLong = Double.doubleToLongBits(expected);
+		long actualLong = Double.doubleToLongBits(actual);
+		Assert.assertEquals(
+				"Expected " + expected + " but was " + actual,
+				expectedLong,
+				actualLong);
 	}
 	
 	/**

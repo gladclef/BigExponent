@@ -66,9 +66,10 @@ public class BigExponent implements Comparable<BigExponent>
 	 */
 	public BigExponent(Double value) throws IllegalArgumentException
 	{
+		// sign
 		isPositive = value >= 0;
-		isPositive = (value != -0.0) ? isPositive : false;
 		
+		// exponent/NaN
 		if (value.isInfinite() || value.isNaN())
 		{
 			if (value.isInfinite())
@@ -85,6 +86,7 @@ public class BigExponent implements Comparable<BigExponent>
 			exponent = Math.getExponent(value);
 		}
 		
+		// mantissa
 		mantissa = getMantissa(value);
 	}
 	
@@ -173,13 +175,13 @@ public class BigExponent implements Comparable<BigExponent>
 		long doubleRep = 0;
 		
 		// sign
-		if (isPositive)
+		if (!isPositive)
 		{
 			doubleRep |= (1l << 63);
 		}
 		
 		// exponent
-		doubleRep |= (exponent << 52);
+		doubleRep |= ((exponent + 1023) << 52);
 		
 		// mantissa
 		doubleRep |= mantissa;
@@ -273,11 +275,11 @@ public class BigExponent implements Comparable<BigExponent>
 		// TODO
 		return null;
 	}
-	
+
 	@Override
 	public int compareTo(BigExponent o)
 	{
-		// TODO
+		// TODO Auto-generated method stub
 		return 0;
 	}
 	
@@ -293,7 +295,7 @@ public class BigExponent implements Comparable<BigExponent>
 	 */
 	public static long getMantissa(double value)
 	{
-		long longRep = Double.doubleToRawLongBits(value);
+		long longRep = Double.doubleToLongBits(value);
 		return longRep & MAX_MANTISSA;
 	}
 }
