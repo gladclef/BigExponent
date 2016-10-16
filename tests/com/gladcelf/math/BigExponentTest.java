@@ -11,6 +11,63 @@ import com.gladclef.math.BigExponent;
 
 public class BigExponentTest
 {
+	public void toDouble_staticMethod_SimpleTest()
+	{
+		Assert.assertEquals(
+				Double.doubleToLongBits(1.0000000000000002),
+				Double.doubleToLongBits(BigExponent.toDouble(true, 0x3ff, 1)));
+	}
+	
+	@Test
+	public void getMantissaTest()
+	{
+		Assert.assertEquals(0, BigExponent.getMantissa(0));
+		Assert.assertEquals(0, BigExponent.getMantissa(2.0));
+		Assert.assertEquals(BigExponent.MAX_MANTISSA, BigExponent.getMantissa(Double.NaN));
+		Assert.assertEquals(0, BigExponent.getMantissa(Double.POSITIVE_INFINITY));
+		Assert.assertEquals(0, BigExponent.getMantissa(Double.NEGATIVE_INFINITY));
+		Assert.assertEquals(1, BigExponent.getMantissa(1.0000000000000002));
+		Assert.assertEquals(2, BigExponent.getMantissa(1.0000000000000004));
+	}
+	
+	@Test
+	public void toDoubleTest()
+	{
+		for (PairContainer pair : createTestingPairs(100))
+		{
+			Assert.assertEquals(pair.firstDouble(), pair.firstBigExponent());
+			Assert.assertEquals(pair.secondDouble(), pair.secondBigExponent());
+		}
+	}
+	
+	@Test
+	public void toDoubleTest_specialDoubleRepresentations()
+	{
+		Assert.assertEquals(
+				Double.doubleToRawLongBits(0.0),
+				Double.doubleToRawLongBits(new BigExponent(0.0).toDouble()));
+		Assert.assertEquals(
+				Double.doubleToRawLongBits(-0.0),
+				Double.doubleToRawLongBits(new BigExponent(-0.0).toDouble()));
+		
+		Assert.assertEquals(
+				Double.doubleToRawLongBits(Double.POSITIVE_INFINITY),
+				Double.doubleToRawLongBits(new BigExponent(Double.POSITIVE_INFINITY).toDouble()));
+		Assert.assertEquals(
+				Double.doubleToRawLongBits(Double.NEGATIVE_INFINITY),
+				Double.doubleToRawLongBits(new BigExponent(Double.NEGATIVE_INFINITY).toDouble()));
+		Assert.assertEquals(
+				Double.doubleToRawLongBits(Double.NaN),
+				Double.doubleToRawLongBits(new BigExponent(Double.NaN).toDouble()));
+
+		Assert.assertEquals(
+				Double.doubleToRawLongBits(new BigExponent(true, 0x7ff, 1).toDouble()),
+				Double.doubleToRawLongBits(new BigExponent(true, 0x7ff, 0).toDouble()));
+		Assert.assertEquals(
+				Double.doubleToRawLongBits(new BigExponent(false, 0x7fe, BigExponent.MAX_MANTISSA).toDouble()),
+				Double.doubleToRawLongBits(new BigExponent(false, 0x7ff, 0).toDouble()));
+	}
+	
 	@Test
 	public void simpleDecimalAdditionTest()
 	{
@@ -82,6 +139,41 @@ public class BigExponentTest
 			String errorMsg = String.format("Dividing %d by %d", pair.firstDouble(), pair.secondDouble());
 			Assert.assertEquals(errorMsg, expResult, pair.firstBigExponent().divide(pair.secondBigExponent()));
 		}
+	}
+	
+	@Test
+	public void addBorderTest()
+	{
+		BigExponent first = new BigExponent(Double.MAX_VALUE);
+		BigExponent plusOne = new BigExponent(true, Double.MAX_EXPONENT, 1);
+		BigExponent expected = new BigExponent(true, Double.MAX_EXPONENT+1, 1);
+		BigExponent result = first.add(plusOne);
+		Assert.assertEquals("addition failed when adding 2^11 to the largest double value", expected, result);
+	}
+	
+	public void subtractBorderTest()
+	{
+		// TODO
+	}
+	
+	public void multiplyBorderTest()
+	{
+		// TODO
+	}
+	
+	public void divideBorderTest()
+	{
+		// TODO
+	}
+	
+	public void powBorderTest()
+	{
+		// TODO
+	}
+	
+	public void addInfinityTest()
+	{
+		BigExponent max = BigExponent.MAX_VALUE;
 	}
 	
 	@Test
