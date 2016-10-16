@@ -6,9 +6,7 @@ import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.gladclef.math.BigExponent;
-
+S
 public class BigExponentTest
 {
 	public void toDouble_staticMethod_SimpleTest()
