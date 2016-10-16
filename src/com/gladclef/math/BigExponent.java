@@ -170,6 +170,14 @@ public class BigExponent implements Comparable<BigExponent>
 		{
 			return Double.NaN;
 		}
+		if (isInfinite())
+		{
+			if (isPositive)
+			{
+				return Double.POSITIVE_INFINITY;
+			}
+			return Double.NEGATIVE_INFINITY;
+		}
 		if (exponent > 0x7ff || (exponent == 0x7ff && mantissa == MAX_MANTISSA))
 		{
 			return Double.POSITIVE_INFINITY;
@@ -206,7 +214,7 @@ public class BigExponent implements Comparable<BigExponent>
 		
 		return Double.longBitsToDouble(doubleRep);
 	}
-
+	
 	/**
 	 * @param other The value to add to this instance.
 	 * @return A new resulting instance.
@@ -293,7 +301,7 @@ public class BigExponent implements Comparable<BigExponent>
 		// TODO
 		return null;
 	}
-
+	
 	@Override
 	public int compareTo(BigExponent o)
 	{
@@ -318,9 +326,11 @@ public class BigExponent implements Comparable<BigExponent>
 	}
 	
 	/**
-	 * Attempts to normalize the exponents between the given BigExponent instances, so that they are operating within the same range.
+	 * Attempts to normalize the exponents between the given BigExponent
+	 * instances, so that they are operating within the same range.
 	 * <p>
-	 * If the spread of exponents is greater than 2047 (0x7ff), then the one with the smaller exponent will be marked as being out of bounds.
+	 * If the spread of exponents is greater than 2047 (0x7ff), then the one
+	 * with the smaller exponent will be marked as being out of bounds.
 	 * <p>
 	 * If both values are infinite, then they are both marked out of bounds.
 	 * 
@@ -328,7 +338,8 @@ public class BigExponent implements Comparable<BigExponent>
 	 * @param second The second value to adjust.
 	 * @return The normalized BigExponent values, with their exponents adjusted.
 	 */
-	public static List<NormalizedBigExponent> normalizeExponents(BigExponent first, BigExponent second)
+	public static List<NormalizedBigExponent> normalizeExponents(BigExponent first,
+			BigExponent second)
 	{
 		// check for if both values are infinite
 		if (first.isInfinite() && second.isInfinite())
@@ -340,8 +351,8 @@ public class BigExponent implements Comparable<BigExponent>
 		}
 		
 		// check that the exponents are within a valid range of each other
-		if (Math.abs(first.getExponent() - second.getExponent()) > (long) 0x7ff ||
-				!first.isInfinite() || !second.isInfinite())
+		if (Math.abs(first.getExponent() - second.getExponent()) > (long) 0x7ff
+				|| first.isInfinite() || second.isInfinite())
 		{
 			long firstAdjustment = 0;
 			long secondAdjustment = 0;
@@ -372,11 +383,15 @@ public class BigExponent implements Comparable<BigExponent>
 		}
 		
 		// adjust the exponents and return new NormalizedBigExponents
-		long adjustment = first.getExponent() - second.getExponent();
-		adjustment = (adjustment == 0x7ff) ? (adjustment / 2l + 1) : adjustment / 2;
-		double firstVal = toDouble(first.isPositive(), first.getExponent() - adjustment, first.getMantissa());
-		double secondVal = toDouble(second.isPositive(), second.getExponent() - adjustment, second.getMantissa());
-		
+		long adjustment = Math.abs(first.getExponent() - second.getExponent());
+		adjustment = (adjustment == 0x7ff) ? (adjustment / (long) 2 + 1) : adjustment / 2;
+		adjustment += Math.min(first.getExponent(), second.getExponent());
+		adjustment *= -1;
+		double firstVal = toDouble(first.isPositive(), first.getExponent() + adjustment,
+				first.getMantissa());
+		double secondVal = toDouble(second.isPositive(), second.getExponent() + adjustment,
+				second.getMantissa());
+				
 		List<NormalizedBigExponent> retval = new ArrayList<>();
 		retval.add(new NormalizedBigExponent(first, firstVal, false, adjustment));
 		retval.add(new NormalizedBigExponent(second, secondVal, false, adjustment));
@@ -393,10 +408,13 @@ public class BigExponent implements Comparable<BigExponent>
 		/**
 		 * @param source The source this was created from.
 		 * @param doubleValue The adjusted value of the source.
-		 * @param outOfBounds If this exponent is less than 2047 (0x7ff) of the exponent of the BigExponent this is being compared to.
-		 * @param exponentAdjustment The adjustment to the doubleValue's exponent.
+		 * @param outOfBounds If this exponent is less than 2047 (0x7ff) of the
+		 *            exponent of the BigExponent this is being compared to.
+		 * @param exponentAdjustment The adjustment that was added to the
+		 *            doubleValue's exponent.
 		 */
-		public NormalizedBigExponent(BigExponent source, double doubleValue, boolean outOfBounds, long exponentAdjustment)
+		public NormalizedBigExponent(BigExponent source, double doubleValue, boolean outOfBounds,
+				long exponentAdjustment)
 		{
 			this.source = source;
 			this.doubleValue = doubleValue;
@@ -419,17 +437,18 @@ public class BigExponent implements Comparable<BigExponent>
 		{
 			return doubleValue;
 		}
-
+		
 		/**
-		 * If this exponent is less than 2047 (0x7ff) of the exponent of the BigExponent this is being compared to.
+		 * If this exponent is less than 2047 (0x7ff) of the exponent of the
+		 * BigExponent this is being compared to.
 		 */
 		public boolean isOutOfBounds()
 		{
 			return outOfBounds;
 		}
-
+		
 		/**
-		 * The adjustment to the doubleValue's exponent.
+		 * The adjustment that was added to the doubleValue's exponent.
 		 */
 		public long getExponentAdjustment()
 		{

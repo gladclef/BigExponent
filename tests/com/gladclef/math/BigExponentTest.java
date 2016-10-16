@@ -7,14 +7,16 @@ import java.util.Random;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gladclef.math.BigExponent.NormalizedBigExponent;
+
 public class BigExponentTest
 {
 	@Test
 	public void toDouble_staticMethod_SimpleTest()
 	{
-		assertDoubleAsLong(1.0000000000000002, BigExponent.toDouble(true, 0, 1));
+		assertDoubleEquality(1.0000000000000002, BigExponent.toDouble(true, 0, 1));
 	}
-
+	
 	@Test
 	public void getMantissaTest()
 	{
@@ -32,26 +34,28 @@ public class BigExponentTest
 	{
 		for (PairContainer pair : createTestingPairs(100))
 		{
-			assertDoubleAsLong((double) pair.firstDouble(), pair.firstBigExponent().toDouble());
-			assertDoubleAsLong((double) pair.secondDouble(), pair.secondBigExponent().toDouble());
+			assertDoubleEquality((double) pair.firstDouble(), pair.firstBigExponent().toDouble());
+			assertDoubleEquality((double) pair.secondDouble(), pair.secondBigExponent().toDouble());
 		}
 	}
 	
 	@Test
 	public void toDoubleTest_specialDoubleRepresentations()
 	{
-		assertDoubleAsLong(0.0, new BigExponent(0.0).toDouble());
+		assertDoubleEquality(0.0, new BigExponent(0.0).toDouble());
 		
-		assertDoubleAsLong(Double.POSITIVE_INFINITY, new BigExponent(Double.POSITIVE_INFINITY).toDouble());
-		assertDoubleAsLong(Double.NEGATIVE_INFINITY, new BigExponent(Double.NEGATIVE_INFINITY).toDouble());
-		assertDoubleAsLong(Double.NaN, new BigExponent(Double.NaN).toDouble());
-
-		assertDoubleAsLong(
-				new BigExponent(true, 0x7ff, 1).toDouble(),
-				new BigExponent(true, 0x7ff, 0).toDouble());
-		assertDoubleAsLong(
-				new BigExponent(false, 0x7fe, BigExponent.MAX_MANTISSA).toDouble(),
-				new BigExponent(false, 0x7ff, 0).toDouble());
+		assertDoubleEquality(Double.POSITIVE_INFINITY,
+				new BigExponent(Double.POSITIVE_INFINITY).toDouble());
+		assertDoubleEquality(Double.NEGATIVE_INFINITY,
+				new BigExponent(Double.NEGATIVE_INFINITY).toDouble());
+		assertDoubleEquality(Double.NaN, new BigExponent(Double.NaN).toDouble());
+		
+		Double maybeInfinite = new BigExponent(true, 0x7ff, 0).toDouble();
+		Assert.assertFalse("positive infinity accidentally encountered",
+				maybeInfinite.isInfinite());
+		maybeInfinite = new BigExponent(false, 0x7ff, 0).toDouble();
+		Assert.assertFalse("negative infinity accidentally encountered",
+				maybeInfinite.isInfinite());
 	}
 	
 	@Test
@@ -66,8 +70,10 @@ public class BigExponentTest
 				continue;
 			}
 			BigExponent expResult = new BigExponent(result);
-			String errorMsg = String.format("Adding %d to %d", pair.firstDouble(), pair.secondDouble());
-			Assert.assertEquals(errorMsg, expResult, pair.firstBigExponent().add(pair.secondBigExponent()));
+			String errorMsg = String.format("Adding %d to %d", pair.firstDouble(),
+					pair.secondDouble());
+			Assert.assertEquals(errorMsg, expResult,
+					pair.firstBigExponent().add(pair.secondBigExponent()));
 		}
 	}
 	
@@ -83,8 +89,10 @@ public class BigExponentTest
 				continue;
 			}
 			BigExponent expResult = new BigExponent(result);
-			String errorMsg = String.format("Subtracting %d from %d", pair.secondDouble(), pair.firstDouble());
-			Assert.assertEquals(errorMsg, expResult, pair.firstBigExponent().subtract(pair.secondBigExponent()));
+			String errorMsg = String.format("Subtracting %d from %d", pair.secondDouble(),
+					pair.firstDouble());
+			Assert.assertEquals(errorMsg, expResult,
+					pair.firstBigExponent().subtract(pair.secondBigExponent()));
 		}
 	}
 	
@@ -100,8 +108,10 @@ public class BigExponentTest
 				continue;
 			}
 			BigExponent expResult = new BigExponent(result);
-			String errorMsg = String.format("Multiplying %d by %d", pair.firstDouble(), pair.secondDouble());
-			Assert.assertEquals(errorMsg, expResult, pair.firstBigExponent().multiply(pair.secondBigExponent()));
+			String errorMsg = String.format("Multiplying %d by %d", pair.firstDouble(),
+					pair.secondDouble());
+			Assert.assertEquals(errorMsg, expResult,
+					pair.firstBigExponent().multiply(pair.secondBigExponent()));
 		}
 	}
 	
@@ -122,8 +132,10 @@ public class BigExponentTest
 				continue;
 			}
 			BigExponent expResult = new BigExponent(result);
-			String errorMsg = String.format("Dividing %d by %d", pair.firstDouble(), pair.secondDouble());
-			Assert.assertEquals(errorMsg, expResult, pair.firstBigExponent().divide(pair.secondBigExponent()));
+			String errorMsg = String.format("Dividing %d by %d", pair.firstDouble(),
+					pair.secondDouble());
+			Assert.assertEquals(errorMsg, expResult,
+					pair.firstBigExponent().divide(pair.secondBigExponent()));
 		}
 	}
 	
@@ -132,9 +144,10 @@ public class BigExponentTest
 	{
 		BigExponent first = new BigExponent(Double.MAX_VALUE);
 		BigExponent plusOne = new BigExponent(true, Double.MAX_EXPONENT, 1);
-		BigExponent expected = new BigExponent(true, Double.MAX_EXPONENT+1, 1);
+		BigExponent expected = new BigExponent(true, Double.MAX_EXPONENT + 1, 1);
 		BigExponent result = first.add(plusOne);
-		Assert.assertEquals("addition failed when adding 2^11 to the largest double value", expected, result);
+		Assert.assertEquals("addition failed when adding 2^11 to the largest double value",
+				expected, result);
 	}
 	
 	public void subtractBorderTest()
@@ -191,48 +204,101 @@ public class BigExponentTest
 	{
 		// TODO
 	}
-
+	
 	public void addSpecialsTest()
 	{
 		// TODO math with infinity and NaN
 	}
-
+	
 	public void subtractSpecialsTest()
 	{
 		// TODO math with infinity and NaN
 	}
-
+	
 	public void multiplySpecialsTest()
 	{
 		// TODO math with infinity and NaN
 	}
-
+	
 	public void divideSpecialsTest()
 	{
 		// TODO math with infinity and NaN
 	}
-
+	
 	public void powSpecialsTest()
 	{
 		// TODO math with infinity and NaN
 	}
 	
+	@Test
 	public void initializeWithInitinityTest()
 	{
-		Assert.assertTrue("Should be infinite but isn't.", new BigExponent(Double.POSITIVE_INFINITY).isInfinite());
-		Assert.assertTrue("Should be infinite but isn't.", new BigExponent(Double.NEGATIVE_INFINITY).isInfinite());
-		Assert.assertTrue("Should be positive but isn't.", new BigExponent(Double.POSITIVE_INFINITY).isPositive());
-		Assert.assertFalse("Should be negative but isn't.", new BigExponent(Double.NEGATIVE_INFINITY).isPositive());
+		Assert.assertTrue("Should be infinite but isn't.",
+				new BigExponent(Double.POSITIVE_INFINITY).isInfinite());
+		Assert.assertTrue("Should be infinite but isn't.",
+				new BigExponent(Double.NEGATIVE_INFINITY).isInfinite());
+		Assert.assertTrue("Should be positive but isn't.",
+				new BigExponent(Double.POSITIVE_INFINITY).isPositive());
+		Assert.assertFalse("Should be negative but isn't.",
+				new BigExponent(Double.NEGATIVE_INFINITY).isPositive());
 	}
 	
-	public void normalizeOutOfBoundsTest()
+	@Test
+	public void normalizeTest()
 	{
-		
+		long spread = 0x3ff;
+		long firstExp = spread + Long.MAX_VALUE / 2;
+		long secondExp = firstExp - spread;
+		BigExponent first = new BigExponent(true, firstExp, 0);
+		BigExponent second = new BigExponent(true, secondExp, 0);
+		List<NormalizedBigExponent> normalizedValues = BigExponent.normalizeExponents(first,
+				second);
+				
+		// sanity check
+		Assert.assertFalse("should have been in bounds, but was out of bounds",
+				normalizedValues.get(0).isOutOfBounds());
+		Assert.assertFalse("should have been in bounds, but was out of bounds",
+				normalizedValues.get(1).isOutOfBounds());
+				
+		// ok, now check the exponent adjustment
+		double firstDouble = normalizedValues.get(0).getDoubleValue();
+		double secondDouble = normalizedValues.get(1).getDoubleValue();
+		Assert.assertEquals("exponent normalization not applied equaly to both values", spread,
+				Math.getExponent(firstDouble) - Math.getExponent(secondDouble));
+		long center = Math.abs(Math.getExponent(firstDouble) - Math.getExponent(secondDouble)) / 2;
+		center += Math.min(Math.getExponent(firstDouble), Math.getExponent(secondDouble));
+		Assert.assertEquals("exponents not centered around zero", 0.0, center, 1.0);
 	}
 	
-	public void normalizeWidestSpreadTest()
+	@Test
+	public void normalize_SpreadTooWideTest()
 	{
-		
+		BigExponent first = new BigExponent(true, 0x7ff + 1, 0);
+		BigExponent second = new BigExponent(true, 0, 0);
+		List<NormalizedBigExponent> normalizedValues = BigExponent.normalizeExponents(first,
+				second);
+				
+		Assert.assertFalse("should have been in bounds, but was out of bounds",
+				normalizedValues.get(0).isOutOfBounds());
+		Assert.assertTrue("should have been out of bounds, but was in bounds",
+				normalizedValues.get(1).isOutOfBounds());
+	}
+	
+	@Test
+	public void normalize_WidestSpreadTest()
+	{
+		long base = Long.MAX_VALUE / 2;
+		BigExponent first = new BigExponent(true, 0x7ff + base, 0);
+		BigExponent second = new BigExponent(true, 0 + base, 0);
+		List<NormalizedBigExponent> normalizedValues = BigExponent.normalizeExponents(first,
+				second);
+				
+		Assert.assertFalse("should have been in bounds, but was out of bounds",
+				normalizedValues.get(0).isOutOfBounds());
+		Assert.assertFalse("should have been in bounds, but was out of bounds",
+				normalizedValues.get(1).isOutOfBounds());
+		Assert.assertEquals(0x7ff, Math.getExponent(normalizedValues.get(0).getDoubleValue()));
+		Assert.assertEquals(0, Math.getExponent(normalizedValues.get(1).getDoubleValue()));
 	}
 	
 	@Test
@@ -247,18 +313,23 @@ public class BigExponentTest
 				continue;
 			}
 			BigExponent expResult = new BigExponent(result);
-			String errorMsg = String.format("Raising %d to the %d power", pair.firstDouble(), pair.secondDouble());
-			Assert.assertEquals(errorMsg, expResult, pair.firstBigExponent().pow(pair.secondBigExponent()));
+			String errorMsg = String.format("Raising %d to the %d power", pair.firstDouble(),
+					pair.secondDouble());
+			Assert.assertEquals(errorMsg, expResult,
+					pair.firstBigExponent().pow(pair.secondBigExponent()));
 		}
 	}
 	
-	private static void assertDoubleAsLong(double expected, double actual)
+	/**
+	 * Verifies that the given double are exactly equal, bit for bit.
+	 * <p>
+	 * Includes "nice" error message if the assertion fails.
+	 */
+	private static void assertDoubleEquality(double expected, double actual)
 	{
 		long expectedLong = Double.doubleToLongBits(expected);
 		long actualLong = Double.doubleToLongBits(actual);
-		Assert.assertEquals(
-				"Expected " + expected + " but was " + actual,
-				expectedLong,
+		Assert.assertEquals("Expected " + expected + " but was " + actual, expectedLong,
 				actualLong);
 	}
 	
@@ -278,13 +349,14 @@ public class BigExponentTest
 	}
 	
 	/**
-	 * A pair of pairs, containing two Double values and two matching BigExponent values.
+	 * A pair of pairs, containing two Double values and two matching
+	 * BigExponent values.
 	 */
 	public static class PairContainer
 	{
 		protected List<Double> doubleVals = new ArrayList<>();
 		protected List<BigExponent> bigExponentVals = new ArrayList<>();
-
+		
 		protected static Random rand = new Random();
 		
 		/**
