@@ -77,6 +77,38 @@ public class BigExponentTest
 		}
 	}
 	
+	public void largeExponentDecimalAdditionTest()
+	{
+		for (PairContainer pair : createTestingPairs(100))
+		{
+			Double result = pair.firstDouble() + pair.secondDouble();
+			if (result.equals(Double.NEGATIVE_INFINITY) || result.equals(Double.NEGATIVE_INFINITY))
+			{
+				// invalid test
+				continue;
+			}
+			for (int i = 0; i < 2; i++)
+			{
+				long base = Long.MAX_VALUE;
+				if (i == 1)
+				{
+					base *= -1;
+				}
+				BigExponent expResult = new BigExponent(result >= 0,
+						Math.getExponent(result) + base, BigExponent.getMantissa(result));
+				BigExponent firstBigExponent = pair.firstBigExponent();
+				firstBigExponent = new BigExponent(firstBigExponent.isPositive(),
+						firstBigExponent.getExponent() + base, firstBigExponent.getMantissa());
+				BigExponent secondBigExponent = pair.secondBigExponent();
+				secondBigExponent = new BigExponent(secondBigExponent.isPositive(),
+						secondBigExponent.getExponent() + base, secondBigExponent.getMantissa());
+				String errorMsg = String.format("Adding %d to %d", pair.firstDouble(),
+						pair.secondDouble());
+				Assert.assertEquals(errorMsg, expResult, firstBigExponent.add(secondBigExponent));
+			}
+		}
+	}
+	
 	@Test
 	public void simpleDecimalSubtractionTest()
 	{

@@ -46,7 +46,7 @@ public class BigExponent implements Comparable<BigExponent>
 	private boolean isPositive;
 	private long exponent;
 	private long mantissa;
-	private boolean isNan = false;
+	private boolean isNaN = false;
 	private boolean isFinite = true;
 	
 	/**
@@ -74,7 +74,7 @@ public class BigExponent implements Comparable<BigExponent>
 		if (value.isNaN())
 		{
 			exponent = 0x7ff;
-			isNan = true;
+			isNaN = true;
 		}
 		else if (value.isInfinite())
 		{
@@ -138,7 +138,7 @@ public class BigExponent implements Comparable<BigExponent>
 	
 	public boolean isNaN()
 	{
-		return isNan;
+		return isNaN;
 	}
 	
 	public boolean isFinite()
@@ -166,7 +166,7 @@ public class BigExponent implements Comparable<BigExponent>
 	public double toDouble()
 	{
 		// special double values
-		if (isNan)
+		if (isNaN)
 		{
 			return Double.NaN;
 		}
@@ -221,8 +221,46 @@ public class BigExponent implements Comparable<BigExponent>
 	 */
 	public BigExponent add(BigExponent other)
 	{
-		// TODO
-		return null;
+		// sanity check
+		if (isInfinite() || isNaN)
+		{
+			return this;
+		}
+		if (other.isInfinite() || other.isNaN)
+		{
+			return other;
+		}
+		
+		// normalize and check bounds
+		List<NormalizedBigExponent> normalizedValues = normalizeExponents(this, other);
+		NormalizedBigExponent first = normalizedValues.get(0);
+		NormalizedBigExponent second = normalizedValues.get(1);
+		if (first.isOutOfBounds())
+		{
+			return other;
+		}
+		if (second.isOutOfBounds())
+		{
+			return this;
+		}
+		
+		// perform arithmetic
+		double result = first.getDoubleValue() + second.getDoubleValue();
+		long exponentChange = Math.getExponent(result) - Math.getExponent(first.getDoubleValue());
+		long newMantissa = getMantissa(result);
+		
+		// check if we're going to encounter infinity
+		if (this.exponent > 0 && exponentChange > 0 && Long.MAX_VALUE - this.exponent < exponentChange)
+		{
+			return new BigExponent(Double.POSITIVE_INFINITY);
+		}
+		if (this.exponent < 0 && exponentChange < 0 && Long.MIN_VALUE - this.exponent > exponentChange)
+		{
+			return new BigExponent(Double.NEGATIVE_INFINITY);
+		}
+		
+		// return new result
+		return new BigExponent(//TODO, this.exponent + exponentChange, newMantissa);
 	}
 	
 	/**
@@ -305,8 +343,128 @@ public class BigExponent implements Comparable<BigExponent>
 	@Override
 	public int compareTo(BigExponent o)
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		// check for NaN
+		if (this.isNaN)
+		{
+			if (o.isNaN)
+			{
+				return 0;
+			}
+			return -1;
+		}
+		
+		// check for infinity
+		if (this.isInfinite())
+		{
+			if (o.isInfinite())
+			{
+				if (this.isPositive)
+				{
+					if (o.isPositive)
+					{
+						return 0;
+					}
+					return 1;
+				}
+				else if (o.isPositive)
+				{
+					return -1;
+				}
+				return 0;
+			}
+			
+			if (this.isPositive)
+			{
+				return 1;
+			}
+			return -1;
+		}
+		
+		// ok, one more check for infinity
+		if (o.isInfinite())
+		{
+			if (o.isPositive)
+			{
+				return -1;
+			}
+			return 1;
+		}
+		
+		// check sign
+		if (this.isPositive)
+		{
+			if (!o.isPositive)
+			{
+				return 1;
+			}
+			
+			// both are positive, check exponent and mantissa
+			if (this.exponent > o.exponent)
+			{
+				return 1;
+			}
+			if (this.exponent < o.exponent)
+			{
+				return -1;
+			}
+			if (this.mantissa > o.mantissa)
+			{
+				return 1;
+			}
+			else if (this.mantissa < o.mantissa)
+			{
+				return -1;
+			}
+			return 0;
+		}
+		else
+		{
+			if (o.isPositive)
+			{
+				return -1;
+			}
+			
+			// both are negative, check exponent and mantissa
+			if (this.exponent > o.exponent)
+			{
+				return -1;
+			}
+			if (this.exponent < o.exponent)
+			{
+				return 1;
+			}
+			if (this.mantissa > o.mantissa)
+			{
+				return 1;
+			}
+			else if (this.mantissa < o.mantissa)
+			{
+				return -1;
+			}
+			return 0;
+		}
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		return (int) exponent & (int) mantissa;
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof BigExponent))
+		{
+			return false;
+		}
+		
+		BigExponent other = (BigExponent) obj;
+		return (isPositive == other.isPositive &&
+				isNaN == other.isNaN &&
+				isFinite == other.isFinite &&
+				exponent == other.exponent &&
+				mantissa == other.mantissa);
 	}
 	
 	@Override
